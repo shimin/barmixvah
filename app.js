@@ -52,7 +52,6 @@ app.use(function(req, res, next) {
     next(err);
 });
 
-
 var server = app.listen(3000, '0.0.0.0');
 var io = require('socket.io').listen(server);
 
@@ -70,7 +69,6 @@ io.sockets.on('connection', function (socket) {
     robot.stopPump(pump);
   });
 });
-
 
 db.once('open', function () {
   Pump.findOne({}, function (err, pump) {
@@ -108,5 +106,22 @@ app.use(function(err, req, res, next) {
     });
 });
 
+process.stdin.resume();//so the program will not close instantly
+
+function exitHandler(options, err) {
+    robot.stopAll();
+    if (options.cleanup) console.log('clean');
+    if (err) console.log(err.stack);
+    if (options.exit) process.exit() 
+}
+
+//do something when app is closing
+process.on('exit', exitHandler.bind(null,{cleanup:true}));
+
+//catches ctrl+c event
+process.on('SIGINT', exitHandler.bind(null, {exit:true}));
+
+//catches uncaught exceptions
+process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
 
 module.exports = app;
